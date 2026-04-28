@@ -1,0 +1,13 @@
+{
+  "title": "Cross-Modal Bottleneck Fusion for Noise Robust Audio-Visual Speech Recognition",
+  "authors": "Seaone Ok*, Minjun Choi*, Eungbeom Kim, Seungu Han, Kyogu Lee",
+  "affiliations": "Music and Audio Research Group, Seoul National University",
+  "venue": "ICASSP 2026, https://arxiv.org/abs/2602.08293",
+  "equal_contribution": "* Equal Contribution",
+  "abstract_paragraphs": [
+    "Audio-Visual Speech Recognition (AVSR) leverages both acoustic and visual cues to improve speech recognition under noisy conditions. A central question is how to design a fusion mechanism that allows the model to effectively exploit visual information when the audio signal is degraded, while maintaining strong performance on clean speech. We propose **CoBRA** (**C**ross-modal **B**ottleneck for **R**obust **A**VSR), a bottleneck-based fusion framework that introduces a compact set of learnable tokens to mediate cross-modal exchange. By regulating information flow through these tokens, the audio stream can reliably access essential visual cues even under adverse or out-of-domain noise.",
+    "Despite limited training data, our model surpasses comparable baselines and remains competitive with large-scale systems through noise-adaptive fusion, demonstrating both efficiency and robustness. Ablation studies highlight that the depth of fusion is the most critical factor, underscoring its importance in designing robust AVSR systems."
+  ],
+  "model_image": "overall_arch-2.png",
+  "model_image_caption": "Overall architecture of the proposed model."
+}

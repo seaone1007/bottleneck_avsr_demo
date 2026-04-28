@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoBRA Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font-main: "DM Sans", system-ui, sans-serif;
+      --bg: #f7f4ef;
+      --bg-card: #fffefb;
+      --ink: #18181a;
+      --ink-muted: #5c5a55;
+      --line: #e2ddd4;
+      --accent: #1a4d5c;
+      --accent-soft: rgba(26, 77, 92, 0.1);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font-main); font-size: 15px; line-height: 1.55; color: var(--ink); background: var(--bg); }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    h1 { font-family: var(--font-main); font-size: 1.85rem; font-weight: 600; line-height: 1.28; margin: 0 0 0.35rem; letter-spacing: -0.02em; text-align: center; }
+    .paper-meta { margin: 0 0 0.65rem; color: var(--ink-muted); text-align: center; }
+    .paper-meta .row { margin: 0.12rem 0; font-size: 0.96rem; }
+    .paper-meta sup { font-size: 0.72em; vertical-align: super; line-height: 0; }
+    .paper-meta .note { margin-top: 0.05rem; font-size: 0.8rem; }
+    .paper-meta a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(26, 77, 92, 0.35); }
+    .paper-meta a:hover { border-bottom-color: var(--accent); }
+    .meta-divider { border: 0; border-top: 1px solid var(--line); margin: 0.9rem 0 1rem; }
+    .abstract p { color: var(--ink); margin: 0 0 0.75rem; max-width: none; }
+    .abstract strong { font-weight: 600; }
+    .figure { margin: 1.5rem 0; text-align: center; }
+    .figure img { max-width: 60%; height: auto; border: none; border-radius: 0; background: transparent; box-shadow: none; }
+    .figure .model-pdf { width: 100%; min-height: 560px; border: none; border-radius: 0; background: transparent; box-shadow: none; }
+    .figure figcaption { font-size: 0.85rem; color: var(--ink-muted); margin-top: 0.5rem; }
+    h2 { font-family: var(--font-main); font-size: 1.25rem; font-weight: 600; margin: 2rem 0 0.55rem; letter-spacing: -0.015em; }
+    .group { margin-bottom: 2rem; }
+    .group-h { font-size: 1.05rem; font-weight: 600; color: var(--accent); margin: 0 0 0.9rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--line); }
+    .pair { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+    @media (min-width: 800px) { .pair { grid-template-columns: 1fr 1fr; } }
+    .card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.1rem; }
+    .gt { font-style: italic; margin-bottom: 0.9rem; line-height: 1.45; }
+    .gt .lbl { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; font-style: normal; color: var(--ink-muted); margin-bottom: 0.3rem; }
+    .media3 { display: grid; grid-template-columns: 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+    @media (min-width: 700px) { .media3 { grid-template-columns: 1fr 1fr 1fr; } }
+    .mcell .lbl { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin-bottom: 0.3rem; }
+    .mcell video { width: 100%; max-height: 200px; border-radius: 8px; background: #000; }
+    .mcell audio { width: 100%; }
+    .preds { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.92rem; }
+    .preds .lbl { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); }
+    .av-best { color: var(--accent); font-weight: 600; }
+    .muted { color: var(--ink-muted); font-size: 0.9rem; }
+    .meta { font-size: 0.78rem; color: var(--ink-muted); margin-top: 0.35rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <article>
+      <h1 id="pageTitle">…</h1>
+      <div class="paper-meta" id="pageMeta" style="display: none">
+        <p class="row" id="metaAuthors"></p>
+        <p class="row note" id="metaEqualContribution"></p>
+        <p class="row" id="metaAffiliations"></p>
+        <p class="row" id="metaVenue"></p>
+      </div>
+      <hr class="meta-divider" id="metaDivider" style="display: none" />
+      <div class="abstract" id="pageAbstract"></div>
+      <figure class="figure" id="pageFigure" style="display: none">
+        <div id="pageModelMedia"></div>
+        <figcaption id="pageModelCaption"></figcaption>
+      </figure>
+    </article>
+
+    <h2>Demos</h2>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const NOISE_ORDER = ['babble', 'pink', 'white'];
+    const SNR_ORDER = [12.5, -2.5, -7.5, -12.5];
+    const RUNTIME = { useApi: true };
+
+    function esc(s) {
+      if (s === null || s === undefined) return "";
+      return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    // Display helper: if text is full uppercase, render in lowercase.
+    function normalizeCaseForDisplay(s) {
+      if (s === null || s === undefined) return "";
+      const t = String(s);
+      const letters = t.match(/[A-Za-z]/g) || [];
+      if (!letters.length) return t;
+      const upper = t.match(/[A-Z]/g) || [];
+      if (upper.length / letters.length > 0.95) return t.toLowerCase();
+      return t;
+    }
+
+    /** Plain text with **bold** segments (pairs of double asterisks). */
+    function formatAbstractParagraph(s) {
+      const str = String(s);
+      let out = "";
+      let i = 0;
+      while (i < str.length) {
+        const open = str.indexOf("**", i);
+        if (open === -1) {
+          out += esc(str.slice(i));
+          break;
+        }
+        out += esc(str.slice(i, open));
+        const close = str.indexOf("**", open + 2);
+        if (close === -1) {
+          out += esc(str.slice(open));
+          break;
+        }
+        out += "<strong>" + esc(str.slice(open + 2, close)) + "</strong>";
+        i = close + 2;
+      }
+      return out;
+    }
+
+    function formatMetaText(s) {
+      const raw = String(s ?? "");
+      return esc(raw).replace(/(\S)\*/g, "$1<sup>*</sup>");
+    }
+
+    function linkifyText(s) {
+      const raw = String(s ?? "");
+      const urlRe = /(https?:\/\/[^\s]+)/g;
+      const parts = raw.split(urlRe);
+      return parts.map((part) => {
+        if (/^https?:\/\//.test(part)) {
+          const safe = esc(part);
+          return `<a href="${safe}" target="_blank" rel="noopener noreferrer">${safe}</a>`;
+        }
+        return formatMetaText(part);
+      }).join("");
+    }
+
+    // Semantic mapping:
+    // - VSR: audio is zeroed
+    // - ASR: video is zeroed
+    function predVSR(r) {
+      return r.pred_audio_zero != null ? r.pred_audio_zero : r.pred_a_only;
+    }
+    function predASR(r) {
+      return r.pred_video_zero != null ? r.pred_video_zero : r.pred_v_only;
+    }
+
+    function resolveMediaPath(path) {
+      if (!path) return "";
+      const p = String(path);
+      if (/^https?:\/\//i.test(p)) return p;
+      if (RUNTIME.useApi) return p;
+      // In static mode, absolute local paths are not web-accessible.
+      if (p.startsWith("/")) return "";
+      return p.replace(/^\.?\//, "");
+    }
+
+    function mediaSrc(kind, path) {
+      const resolved = resolveMediaPath(path);
+      if (!resolved) return "";
+      if (!RUNTIME.useApi) return encodeURI(resolved);
+      return `/api/${kind}?path=${encodeURIComponent(resolved)}`;
+    }
+
+    function buildMedia3(r) {
+      const vSrc = mediaSrc("video", r.video_path);
+      const cSrc = mediaSrc("audio", r.clean_audio_path);
+      const nSrc = mediaSrc("audio", r.noisy_audio_path);
+      const v = r.video_path
+        ? `<div class="mcell"><div class="lbl">Video</div>${vSrc ? `<video controls playsinline src="${esc(vSrc)}"></video>` : '<div class="muted">(missing file)</div>'}</div>` : '<div class="mcell"></div>';
+      const c = r.clean_audio_path
+        ? `<div class="mcell"><div class="lbl">Origin audio</div>${cSrc ? `<audio controls src="${esc(cSrc)}"></audio>` : '<div class="muted">(missing file)</div>'}</div>` : '<div class="mcell"></div>';
+      const n = r.noisy_audio_path
+        ? `<div class="mcell"><div class="lbl">Noised audio</div>${nSrc ? `<audio controls src="${esc(nSrc)}"></audio>` : '<div class="muted">(missing file)</div>'}</div>` : '<div class="mcell"></div>';
+      return `<div class="media3">${v}${c}${n}</div>`;
+    }
+
+    function buildPreds(r) {
+      const pVonly = predVSR(r);
+      const pAonly = predASR(r);
+      const avText = (r.pred_av && String(r.pred_av).trim()) ? normalizeCaseForDisplay(r.pred_av) : "(empty)";
+      const vOnlyText = (pVonly && String(pVonly).trim()) ? normalizeCaseForDisplay(pVonly) : "(empty)";
+      const aOnlyText = (pAonly && String(pAonly).trim()) ? normalizeCaseForDisplay(pAonly) : "(empty)";
+      const adv = Number(r.av_advantage);
+      const avClass = (adv > 0.5) ? " av-best" : "";
+      return `
+        <div class="preds">
+          <div><span class="lbl">AVSR</span><div class="pred-av${avClass}">${esc(avText)}</div></div>
+          <div><span class="lbl">ASR</span><div>${esc(aOnlyText)}</div></div>
+          <div><span class="lbl">VSR</span><div>${esc(vOnlyText)}</div></div>
+        </div>
+      `;
+    }
+
+    function numSNR(x) {
+      const n = Number(x);
+      if (Number.isNaN(n)) return x;
+      return Math.round(n * 100) / 100;
+    }
+
+    function groupRows(rows) {
+      const map = {};
+      for (const r of rows) {
+        const noise = String(r.noise_type || "").toLowerCase();
+        const snr = numSNR(r.snr);
+        const key = noise + "::" + String(snr);
+        if (!map[key]) map[key] = { noise, snr, samples: [] };
+        map[key].samples.push(r);
+      }
+      const out = [];
+      for (const n of NOISE_ORDER) {
+        for (const s of SNR_ORDER) {
+          const k = n + "::" + String(s);
+          if (map[k] && map[k].samples.length)
+            out.push({ noise: n, snr: s, samples: map[k].samples });
+        }
+      }
+      for (const k of Object.keys(map)) {
+        if (out.find((g) => g.noise + "::" + String(g.snr) === k)) continue;
+        if (map[k].samples.length) out.push(map[k]);
+      }
+      return out;
+    }
+
+    function renderContent(c) {
+      if (c.font_family) {
+        document.documentElement.style.setProperty("--font-main", String(c.font_family));
+      }
+      document.getElementById("pageTitle").textContent = c.title || "Demo";
+      const meta = document.getElementById("pageMeta");
+      const metaDivider = document.getElementById("metaDivider");
+      const authorEl = document.getElementById("metaAuthors");
+      const affEl = document.getElementById("metaAffiliations");
+      const venueEl = document.getElementById("metaVenue");
+      const eqEl = document.getElementById("metaEqualContribution");
+      const authors = c.authors || "";
+      const affiliations = c.affiliations || "";
+      const venue = c.venue || "";
+      const equalContribution = c.equal_contribution || "";
+      authorEl.innerHTML = formatMetaText(authors);
+      affEl.innerHTML = formatMetaText(affiliations);
+      venueEl.innerHTML = linkifyText(venue);
+      eqEl.innerHTML = formatMetaText(equalContribution);
+      const hasMeta = Boolean(authors || affiliations || venue || equalContribution);
+      meta.style.display = hasMeta ? "block" : "none";
+      metaDivider.style.display = hasMeta ? "block" : "none";
+      const ab = document.getElementById("pageAbstract");
+      const paras = c.abstract_paragraphs || (c.abstract ? [c.abstract] : []);
+      ab.innerHTML = paras.map((p) => `<p>${formatAbstractParagraph(p)}</p>`).join("");
+      const imgName = c.model_image;
+      const fig = document.getElementById("pageFigure");
+      const media = document.getElementById("pageModelMedia");
+      if (imgName) {
+        const isUrl = /^https?:\/\//i.test(imgName);
+        const src = isUrl
+          ? imgName
+          : (RUNTIME.useApi
+            ? ("/api/asset?name=" + encodeURIComponent(imgName.replace(/^\/+/, "")))
+            : encodeURI(imgName.replace(/^\.?\//, "")));
+        const lower = imgName.toLowerCase();
+        if (lower.endsWith(".pdf")) {
+          media.innerHTML = `<iframe class="model-pdf" src="${esc(src)}#toolbar=0" title="Model architecture"></iframe>`;
+        } else {
+          media.innerHTML = `<img src="${esc(src)}" alt="Model architecture" />`;
+        }
+        document.getElementById("pageModelCaption").textContent = c.model_image_caption || "";
+        fig.style.display = "block";
+      } else {
+        media.innerHTML = "";
+        fig.style.display = "none";
+      }
+    }
+
+    function renderResults(rows) {
+      const el = document.getElementById("results");
+      if (!rows || !rows.length) {
+        el.innerHTML = '<p class="muted">No results. Run <code>python3 demo.py</code> to build <code>outputs/demo_noise_inference.jsonl</code>.</p>';
+        return;
+      }
+      const groups = groupRows(rows);
+      el.innerHTML = groups.map((g) => {
+        const h = g.noise.charAt(0).toUpperCase() + g.noise.slice(1) + " · SNR " + g.snr + " dB";
+        const cards = g.samples.map((r) => `
+          <div class="card">
+            ${buildMedia3(r)}
+            <div class="gt"><span class="lbl">Ground truth</span>${esc(normalizeCaseForDisplay(r.ref || ""))}</div>
+            ${buildPreds(r)}
+          </div>
+        `).join("");
+        return `<section class="group"><div class="group-h">${esc(h)}</div><div class="pair">${cards}</div></section>`;
+      }).join("");
+    }
+
+    async function boot() {
+      try {
+        const cr = await fetch("/api/content");
+        if (!cr.ok) throw new Error("api content failed");
+        const content = await cr.json();
+        RUNTIME.useApi = true;
+        renderContent(content);
+      } catch (e) {
+        RUNTIME.useApi = false;
+        try {
+          const cr = await fetch("./content.json");
+          if (!cr.ok) throw new Error("static content failed");
+          const content = await cr.json();
+          renderContent(content);
+        } catch (_) {
+          document.getElementById("pageTitle").textContent = "Demo";
+        }
+      }
+      try {
+        if (RUNTIME.useApi) {
+          const rr = await fetch("/api/results");
+          if (!rr.ok) throw new Error("api results failed");
+          const data = await rr.json();
+          renderResults(data.rows || []);
+        } else {
+          const rr = await fetch("./results.jsonl");
+          if (!rr.ok) throw new Error("static results failed");
+          const txt = await rr.text();
+          const rows = txt
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => {
+              try { return JSON.parse(line); } catch (_) { return null; }
+            })
+            .filter(Boolean);
+          renderResults(rows);
+        }
+      } catch (e) {
+        document.getElementById("results").innerHTML = "<p>Could not load results.</p>";
+      }
+    }
+    boot();
+  </script>
+</body>
+</html>
